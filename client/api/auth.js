@@ -20,7 +20,6 @@ export const logout = async () => {
   });
 };
 
-export const getEmployees = async () => {
-  return api("/employees");
+export const getCurrentUser = async () => {
+  return api("/auth/me");
 };
-

@@ -1,20 +1,43 @@
-import { createContext, useContext, useState } from "react";
-import { login as loginRequest, logout as logoutRequest } from "../api/auth";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  getCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest,
+} from "../api/auth";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const response = await getCurrentUser();
+        setUser(response.data);
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, []);
 
   const login = async (credentials) => {
     setLoading(true);
 
     try {
       const response = await loginRequest(credentials);
-
       setUser(response.data);
-
       return response;
     } finally {
       setLoading(false);
@@ -51,9 +74,10 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error("useAuth must be used inside an AuthProvider");
+    throw new Error(
+      "useAuth must be used inside an AuthProvider"
+    );
   }
 
   return context;
 };
-

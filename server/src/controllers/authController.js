@@ -1,34 +1,46 @@
 import prisma from "../utils/prisma.js";
-import { registerSchema, loginSchema } from "../utils/authValidation.js";
+import {
+  registerSchema,
+  loginSchema,
+} from "../utils/authValidation.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import generateToken from "../utils/auth.js";
 
 export const register = async (req, res) => {
   try {
-    const validation = registerSchema.safeParse(req.body);
+    const validation = registerSchema.safeParse(
+      req.body
+    );
 
     if (!validation.success) {
       return res.status(400).json({
         success: false,
         message: "Validation failed",
-        errors: validation.error.flatten().fieldErrors,
+        errors:
+          validation.error.flatten().fieldErrors,
       });
     }
 
-    const { name, email, password } = validation.data;
+    const { name, email, password } =
+      validation.data;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser =
+      await prisma.user.findUnique({
+        where: { email },
+      });
 
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: "A user with this email already exists",
+        message:
+          "A user with this email already exists",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(
+      password,
+      12
+    );
 
     const user = await prisma.user.create({
       data: {
@@ -48,7 +60,10 @@ export const register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error registering user:", error);
+    console.error(
+      "Error registering user:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -59,21 +74,26 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const validation = loginSchema.safeParse(req.body);
+    const validation = loginSchema.safeParse(
+      req.body
+    );
 
     if (!validation.success) {
       return res.status(400).json({
         success: false,
         message: "Validation failed",
-        errors: validation.error.flatten().fieldErrors,
+        errors:
+          validation.error.flatten().fieldErrors,
       });
     }
 
-    const { email, password } = validation.data;
+    const { email, password } =
+      validation.data;
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const user =
+      await prisma.user.findUnique({
+        where: { email },
+      });
 
     if (!user) {
       return res.status(401).json({
@@ -82,7 +102,11 @@ export const login = async (req, res) => {
       });
     }
 
-    const passwordMatches = await bcrypt.compare(password, user.password);
+    const passwordMatches =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
 
     if (!passwordMatches) {
       return res.status(401).json({
@@ -91,20 +115,11 @@ export const login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
-      }
-    );
+    const token = generateToken(user);
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -119,7 +134,10 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error logging in:", error);
+    console.error(
+      "Error logging in:",
+      error
+    );
 
     res.status(500).json({
       success: false,
@@ -130,7 +148,7 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     sameSite: "lax",
   });
 
@@ -138,5 +156,40 @@ export const logout = (req, res) => {
     success: true,
     message: "Logout successful",
   });
+};
+
+export const getMe = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    console.error(
+      "Error fetching current user:",
+      error
+    );
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch current user",
+    });
+  }
 };
 

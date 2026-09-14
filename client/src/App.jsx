@@ -1,122 +1,216 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import "./App.css";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+import {
+  Activity,
+  BriefcaseBusiness,
+  CalendarDays,
+  LogOut,
+  Settings,
+  Users,
+} from "lucide-react";
 
-function App() {
-  const [count, setCount] = useState(0)
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Employees from "./pages/Employees";
+import Attendance from "./pages/Attendance";
+import SettingsPage from "./pages/Settings";
+
+import { AuthProvider, useAuth } from "../context/AuthContext";
+
+function DashboardLayout({ children }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, logout, loading } = useAuth();
+
+  const isActive = (path) => location.pathname === path;
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <main className="dashboard-page">
+      <aside className="dashboard-sidebar">
+        <div className="dashboard-brand">
+          <div className="dashboard-brand-icon">
+            <BriefcaseBusiness size={20} />
+          </div>
+
+          <span>WorkForce</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+
+        <nav className="dashboard-nav">
+          <span className="nav-section-label">MAIN</span>
+
+          <button
+            type="button"
+            className={`dashboard-nav-item ${
+              isActive("/dashboard") ? "active" : ""
+            }`}
+            onClick={() => navigate("/dashboard")}
+          >
+            <Activity size={18} />
+            <span>Overview</span>
+          </button>
+
+          <button
+            type="button"
+            className={`dashboard-nav-item ${
+              isActive("/employees") ? "active" : ""
+            }`}
+            onClick={() => navigate("/employees")}
+          >
+            <Users size={18} />
+            <span>Employees</span>
+          </button>
+
+          <button
+            type="button"
+            className={`dashboard-nav-item ${
+              isActive("/attendance") ? "active" : ""
+            }`}
+            onClick={() => navigate("/attendance")}
+          >
+            <CalendarDays size={18} />
+            <span>Attendance</span>
+          </button>
+
+          <span className="nav-section-label">SYSTEM</span>
+
+          <button
+            type="button"
+            className={`dashboard-nav-item ${
+              isActive("/settings") ? "active" : ""
+            }`}
+            onClick={() => navigate("/settings")}
+          >
+            <Settings size={18} />
+            <span>Settings</span>
+          </button>
+        </nav>
+
+        <div className="sidebar-user">
+          <div className="sidebar-avatar">
+            {user?.name?.charAt(0).toUpperCase() || "U"}
+          </div>
+
+          <div className="sidebar-user-info">
+            <strong>{user?.name || "User"}</strong>
+            <span>{user?.email || ""}</span>
+          </div>
+
+          <button
+            type="button"
+            className="sidebar-logout"
+            onClick={handleLogout}
+            disabled={loading}
+            title="Log out"
+          >
+            <LogOut size={17} />
+          </button>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+      </aside>
+
+      <section className="dashboard-content">
+        {children}
       </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    </main>
+  );
 }
 
-export default App
+function ProtectedRoutes() {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/dashboard"
+        element={
+          <DashboardLayout>
+            <Dashboard />
+          </DashboardLayout>
+        }
+      />
+
+      <Route
+        path="/employees"
+        element={
+          <DashboardLayout>
+            <Employees />
+          </DashboardLayout>
+        }
+      />
+
+      <Route
+        path="/attendance"
+        element={
+          <DashboardLayout>
+            <Attendance />
+          </DashboardLayout>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <DashboardLayout>
+            <SettingsPage />
+          </DashboardLayout>
+        }
+      />
+
+      <Route
+        path="*"
+        element={<Navigate to="/dashboard" replace />}
+      />
+    </Routes>
+  );
+}
+
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Login />
+          )
+        }
+      />
+
+      <Route
+        path="/*"
+        element={<ProtectedRoutes />}
+      />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
+
+export default App;
