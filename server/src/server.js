@@ -7,6 +7,7 @@ import employeeRoutes from "./routes/employeeRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import { authenticate } from "./middleware/authMiddleware.js";
 import cookieParser from "cookie-parser";
+import attendanceRoutes from "./routes/attendanceRoutes.js";
 
 const app = express();
 app.use(cookieParser());
@@ -23,7 +24,7 @@ app.use(
 app.use(express.json());
 app.use("/api/employees", employeeRoutes);
 app.use("/api/auth", authRoutes);
-
+app.use("/api/attendance", attendanceRoutes);
 app.get("/api/protected", authenticate, (req, res) => {
   res.json({
     success: true,

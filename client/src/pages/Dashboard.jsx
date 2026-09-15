@@ -9,6 +9,7 @@ import {
   Plus,
   Search,
   Users,
+  X,
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -21,6 +22,8 @@ const Dashboard = () => {
   const [employees, setEmployees] = useState([]);
   const [employeesLoading, setEmployeesLoading] = useState(true);
   const [employeesError, setEmployeesError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     const loadEmployees = async () => {
@@ -32,14 +35,10 @@ const Dashboard = () => {
 
         setEmployees(response.data || []);
       } catch (error) {
-        console.error(
-          "Failed to load employees:",
-          error
-        );
+        console.error("Failed to load employees:", error);
 
         setEmployeesError(
-          error.message ||
-            "Failed to load employees."
+          error.message || "Failed to load employees."
         );
       } finally {
         setEmployeesLoading(false);
@@ -63,6 +62,40 @@ const Dashboard = () => {
       .filter(Boolean)
   ).size;
 
+  const searchResults = employees.filter((employee) => {
+    const search = searchTerm.toLowerCase().trim();
+
+    if (!search) return false;
+
+    const fullName =
+      `${employee.firstName || ""} ${employee.lastName || ""}`
+        .toLowerCase();
+
+    const email = employee.email?.toLowerCase() || "";
+    const position = employee.position?.toLowerCase() || "";
+    const department = employee.department?.toLowerCase() || "";
+
+    return (
+      fullName.includes(search) ||
+      email.includes(search) ||
+      position.includes(search) ||
+      department.includes(search)
+    );
+  });
+
+  const showSearchResults =
+    searchFocused && searchTerm.trim().length > 0;
+
+  const handleSearchResult = () => {
+    setSearchTerm("");
+    setSearchFocused(false);
+    navigate("/employees");
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
   return (
     <>
       {/* HEADER */}
@@ -84,17 +117,127 @@ const Dashboard = () => {
         </div>
 
         <div className="dashboard-header-actions">
-          <button
-            type="button"
-            className="dashboard-search"
-            onClick={() => navigate("/employees")}
+          {/* SEARCH */}
+
+          <div
+            className="dashboard-search-wrapper"
+            onFocus={() => setSearchFocused(true)}
+            onBlur={(event) => {
+              if (
+                !event.currentTarget.contains(
+                  event.relatedTarget
+                )
+              ) {
+                setSearchFocused(false);
+              }
+            }}
           >
-            <Search size={17} />
+            <div className="dashboard-search">
+              <Search size={17} />
 
-            <span>Search</span>
+              <input
+                type="text"
+                placeholder="Search employees..."
+                value={searchTerm}
+                onChange={(event) =>
+                  setSearchTerm(event.target.value)
+                }
+                aria-label="Search employees"
+              />
 
-            <kbd>⌘ K</kbd>
-          </button>
+              {searchTerm ? (
+                <button
+                  type="button"
+                  className="dashboard-search-clear"
+                  onClick={clearSearch}
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              ) : (
+                <kbd>⌘ K</kbd>
+              )}
+            </div>
+
+            {showSearchResults && (
+              <div className="dashboard-search-results">
+                {employeesLoading ? (
+                  <div className="dashboard-search-message">
+                    Searching employees...
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="dashboard-search-message">
+                    No employees found.
+                  </div>
+                ) : (
+                  <>
+                    <div className="dashboard-search-label">
+                      EMPLOYEES
+                    </div>
+
+                    {searchResults
+                      .slice(0, 5)
+                      .map((employee) => {
+                        const firstInitial =
+                          employee.firstName?.charAt(0) || "";
+
+                        const lastInitial =
+                          employee.lastName?.charAt(0) || "";
+
+                        const initials =
+                          `${firstInitial}${lastInitial}`.toUpperCase();
+
+                        return (
+                          <button
+                            type="button"
+                            className="dashboard-search-result"
+                            key={employee.id}
+                            onMouseDown={(event) =>
+                              event.preventDefault()
+                            }
+                            onClick={handleSearchResult}
+                          >
+                            <div className="search-result-avatar">
+                              {initials}
+                            </div>
+
+                            <div className="search-result-info">
+                              <strong>
+                                {employee.firstName}{" "}
+                                {employee.lastName}
+                              </strong>
+
+                              <span>
+                                {employee.position ||
+                                  employee.department}
+                              </span>
+                            </div>
+
+                            <ChevronRight size={15} />
+                          </button>
+                        );
+                      })}
+
+                    {searchResults.length > 5 && (
+                      <button
+                        type="button"
+                        className="dashboard-search-view-all"
+                        onMouseDown={(event) =>
+                          event.preventDefault()
+                        }
+                        onClick={handleSearchResult}
+                      >
+                        View all employees
+                        <ChevronRight size={14} />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ADD EMPLOYEE */}
 
           <button
             type="button"

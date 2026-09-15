@@ -20,6 +20,7 @@ import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
 import Attendance from "./pages/Attendance";
 import SettingsPage from "./pages/Settings";
+import Register from "./pages/Register";
 
 import { AuthProvider, useAuth } from "../context/AuthContext";
 
@@ -196,6 +197,16 @@ function AppContent() {
           )
         }
       />
+      <Route
+  path="/register"
+  element={
+    isAuthenticated ? (
+      <Navigate to="/dashboard" replace />
+    ) : (
+      <Register />
+    )
+  }
+/>
 
       <Route
         path="/*"
